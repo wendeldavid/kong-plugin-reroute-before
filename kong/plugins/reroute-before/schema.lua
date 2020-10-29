@@ -1,49 +1,34 @@
 local typedefs = require "kong.db.schema.typedefs"
-local pl_template = require "pl.template"
-local tx = require "pl.tablex"
-local validate_header_name = require("kong.tools.utils").validate_header_name
 
 -- Grab pluginname from module name
 local plugin_name = ({...})[1]:match("^kong%.plugins%.([^%.]+)")
 
-local function validate_customization(pair)
-  local name, value = pair:match("^([^,]+),*(.-)$")
-  if name == nil then
-    return nil, string.format("'%s' tenant is incorrect", tostring(name))
-  end
+local reroute_record = {
+  type = "record",
+  fields = {
+    {
+      header_name = {
+        type = "string",
+        required = true
+      }
+    },{
+      header_value = {
+        type = "string",
+        required = true
+      }
+    },{
+      url = {
+        type = "string",
+        required = true
+      }
+    }
+  }
+}
 
-  if value == nil then
-    return nil, string.format("'%s' custom URL is incorrect", tostring(value))
-  end
-  return true
-end
-
--- local customization_record = {
---   type = "record",
---   fields = {
---     { 
---       tenant = {
---         type = "string"
---       } 
---     },
---     { 
---       endpoint = {
---         type = "string"
---       }
---     }
---   }
--- }
-
--- local customization_array = {
---   type = "array",
---   default = {},
---   elements = { type = "string" }
--- }
-
-local customization_value_array = {
+local reroute_array = {
   type = "array",
   default = {},
-  elements = { type = "string", match = "^[^,]+,.*$", custom_validator = validate_customization },
+  elements = reroute_record
 }
 
 local schema = {
@@ -57,7 +42,7 @@ local schema = {
         type = "record",
         fields = {
 
-          { before = customization_value_array },
+          { before = reroute_array },
           { timeout = {
               type = "integer",
               default = 10000,
@@ -72,25 +57,9 @@ local schema = {
             }
           }
 
-          -- -- a standard defined field (typedef), with some customizations
-          -- { request_header = typedefs.header_name {
-          --     required = true,
-          --     default = "Hello-World" } },
-          -- { response_header = typedefs.header_name {
-          --     required = true,
-          --     default = "Bye-World" } },
-          -- { ttl = { -- self defined field
-          --     type = "integer",
-          --     default = 600,
-          --     required = true,
-          --     gt = 0, }}, -- adding a constraint for the value
         },
         entity_checks = {
-          -- add some validation rules across fields
-          -- the following is silly because it is always true, since they are both required
-          -- { at_least_one_of = { "request_header", "response_header" }, },
-          -- We specify that both header-names cannot be the same
-          -- { distinct = { "request_header", "response_header"} },
+
         },
       },
     },
