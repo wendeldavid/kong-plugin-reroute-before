@@ -41,9 +41,9 @@ end
 local function getURL(plugin_conf)
 
   kong.log.debug("buscando url de customização")
-  kong.log.debug(plugin_conf.after[1].header_name)
+  kong.log.debug(plugin_conf.before[1].header_name)
 
-  for _, header_name, header_value, url in iter(plugin_conf.after) do
+  for _, header_name, header_value, url in iter(plugin_conf.before) do
     local req_header_value = kong.request.get_header(header_name)
 
     kong.log.debug("iter config -> header_name: "..header_name.." header_value: "..header_value.." url: "..url)
@@ -101,20 +101,20 @@ function plugin:access(plugin_conf)
   local customizationUrl = getURL(plugin_conf)
 
   if customizationUrl ~= nil then
-    kong.log.debug("faz o after pra fora e pega a resposta e manda pro upstream service")
+    kong.log.debug("faz o before pra fora e pega a resposta e manda pro upstream service")
 
-    local afterRes = make_request(plugin_conf, customizationUrl)
+    local beforeRes = make_request(plugin_conf, customizationUrl)
 
-    if not afterRes or afterRes.status >= 300 then
+    if not beforeRes or beforeRes.status >= 300 then
       return kong.response.exit(500, "fuuuuu")
     end
 
-    kong.log.debug("resposta do after")
-    kong.log.debug(afterRes)
+    kong.log.debug("resposta do before")
+    kong.log.debug(beforeRes)
 
-    kong.log.debug("reaponse has body: "..tostring(afterRes.has_body))
+    kong.log.debug("reaponse has body: "..tostring(beforeRes.has_body))
 
-    local body = afterRes:read_body()
+    local body = beforeRes:read_body()
     kong.log.debug("response body")
     kong.log.debug(body)
 
