@@ -14,3 +14,20 @@ Please check out those repos `README` files for usage instructions.
 
 [badge-travis-url]: https://travis-ci.org/Kong/kong-plugin/branches
 [badge-travis-image]: https://travis-ci.com/Kong/kong-plugin.svg?branch=master
+
+```json
+{
+	"config": {
+		"around": [
+			{
+				"header_name": "X-Tenant",
+				"header_value": "senior", 
+				"url": "http://nodezera:8080/bridge/rest/endpoint_2"
+			}
+		], 
+		"timeout": 10000, 
+		"run_on_preflight": false
+	},
+	"name":"reroute-around"
+}
+```

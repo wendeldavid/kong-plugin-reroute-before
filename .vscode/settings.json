@@ -3,6 +3,12 @@
         "kong",
         "ngx",
         "unpack",
-        "noop"
+        "noop",
+        "describe",
+        "lazy_setup",
+        "lazy_teardown",
+        "before_each",
+        "after_each",
+        "it"
     ]
 }

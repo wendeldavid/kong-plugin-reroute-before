@@ -1,8 +1,7 @@
 local helpers = require "spec.helpers"
-
+local cjson    = require "cjson"
 
 local PLUGIN_NAME = "reroute-before"
-
 
 for _, strategy in helpers.each_strategy() do
   describe(PLUGIN_NAME .. ": (access) [#" .. strategy .. "]", function()
@@ -21,7 +20,17 @@ for _, strategy in helpers.each_strategy() do
       bp.plugins:insert {
         name = PLUGIN_NAME,
         route = { id = route1.id },
-        config = {},
+        config = {
+          before = {
+            {
+              header_name = "X-Tenants",
+              header_value = "senior",
+              url = "http://mockbin.com/request?foo=bar&foo=baz"
+            }
+          },
+          timeout = 10000,
+          run_on_preflight = false
+        }
       }
 
       -- start kong
@@ -49,39 +58,42 @@ for _, strategy in helpers.each_strategy() do
 
 
 
-    describe("request", function()
-      it("gets a 'hello-world' header", function()
+    describe("request without plugin", function()
+      it("gets a 'X-Tenant' header", function()
         local r = client:get("/request", {
           headers = {
-            host = "test1.com"
+            host = "test1.com",
+            ["X-Tenant"] = "senior"
           }
         })
         -- validate that the request succeeded, response status 200
-        assert.response(r).has.status(200)
+        local body_value =assert.response(r).has.status(200)
         -- now check the request (as echoed by mockbin) to have the header
-        local header_value = assert.request(r).has.header("hello-world")
+        local header_value = assert.request(r).has.header("X-Tenant")
         -- validate the value of that header
-        assert.equal("this is on a request", header_value)
+        assert.equal("senior", header_value)
+
+        assert.equal("senior", cjson.decode(body_value).headers["x-tenant"])
       end)
     end)
 
 
 
-    describe("response", function()
-      it("gets a 'bye-world' header", function()
-        local r = client:get("/request", {
-          headers = {
-            host = "test1.com"
-          }
-        })
-        -- validate that the request succeeded, response status 200
-        assert.response(r).has.status(200)
-        -- now check the response to have the header
-        local header_value = assert.response(r).has.header("bye-world")
-        -- validate the value of that header
-        assert.equal("this is on the response", header_value)
-      end)
-    end)
+    -- describe("response", function()
+    --   it("gets a 'bye-world' header", function()
+    --     local r = client:get("/request", {
+    --       headers = {
+    --         host = "test1.com"
+    --       }
+    --     })
+    --     -- validate that the request succeeded, response status 200
+    --     assert.response(r).has.status(200)
+    --     -- now check the response to have the header
+    --     local header_value = assert.response(r).has.header("bye-world")
+    --     -- validate the value of that header
+    --     assert.equal("this is on the response", header_value)
+    --   end)
+    -- end)
 
   end)
 end

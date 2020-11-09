@@ -106,7 +106,7 @@ function plugin:access(plugin_conf)
     local beforeRes = make_request(plugin_conf, customizationUrl)
 
     if not beforeRes or beforeRes.status >= 300 then
-      return kong.response.exit(500, "fuuuuu")
+      return kong.response.exit(500, "Cannot execute before route request")
     end
 
     kong.log.debug("resposta do before")
