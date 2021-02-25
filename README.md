@@ -1,33 +1,37 @@
-[![Build Status][badge-travis-image]][badge-travis-url]
+# Kong plugin reroute-before
 
-Kong plugin template
-====================
+When a request to the upstream service needs to be redirected to a custom backend **before** to send it to the upstream.
 
-This repository contains a very simple Kong plugin template to get you
-up and running quickly for developing your own plugins.
+## Configuration Reference
 
-This template was designed to work with the
-[`kong-pongo`](https://github.com/Kong/kong-pongo) and
-[`kong-vagrant`](https://github.com/Kong/kong-vagrant) development environments.
-
-Please check out those repos `README` files for usage instructions.
-
-[badge-travis-url]: https://travis-ci.org/Kong/kong-plugin/branches
-[badge-travis-image]: https://travis-ci.com/Kong/kong-plugin.svg?branch=master
-
+### Enabling the plugin on a Service, Route or Globally
 ```json
-{
-	"config": {
-		"around": [
-			{
-				"header_name": "X-Tenant",
-				"header_value": "senior", 
-				"url": "http://nodezera:8080/bridge/rest/endpoint_2"
-			}
-		], 
-		"timeout": 10000, 
-		"run_on_preflight": false
-	},
-	"name":"reroute-around"
-}
+curl -X POST 'http://<admin-hostname>:8001/<enabling-location>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "reroute-before",
+    "config": {
+        "run_on_preflight" : false,
+        "before" : [{
+            "header_name" : "X-Custom-Header",
+            "header_value" : "header-value",
+            "url" : "http://custom.url"
+        }]
+    }
+}'
 ```
+
+where `<enabling-location>` can be:
+
+|     local    |                value               |
+| ------------ | ---------------------------------- |
+| on a Service | `/services/<service-name>/plugins` |
+| on a Route   | `/routes/<route-name>/plugins`     |
+| globally     |  `/plugins`                        |
+
+
+## Usage
+
+After enabling on a route/service/globally, a request will be checked if a header value match with the configuration. If it matches, then the plugin will made a request to the URL configured sending the original request to the custom endpoint. The next step is get the response from custom service and send it to the upstream service.
+
+![alt](doc/kong-plugin-reroute-before.png)
